@@ -1,0 +1,17 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# WowAddOnStudio Solution File, Format Version 11.00
+Project("{E6E1D386-69D8-4755-9E61-0950293915FC}") = "SecondSight", "SecondSight\SecondSight.wowproj", "{E2A8D0B0-0DB9-4288-868C-569B8E4DDA41}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Default|Any CPU = Default|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E2A8D0B0-0DB9-4288-868C-569B8E4DDA41}.Default|Any CPU.ActiveCfg = Default|Any CPU
+		{E2A8D0B0-0DB9-4288-868C-569B8E4DDA41}.Default|Any CPU.Build.0 = Default|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
