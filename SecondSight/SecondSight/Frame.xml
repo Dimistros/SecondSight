@@ -24,11 +24,18 @@
 						<Offset x="-10" y="-10" />
 					</Anchor>
 				</Anchors>
+				<Scripts>
+					<OnClick>
+						ExitButton_OnClick()
+					</OnClick>
+				</Scripts>
 			</Button>
 		</Frames>
 		<Scripts>
 			<OnLoad>
 				FrameTemplate:RegisterForDrag("LeftButton");
+
+				FrameTemplate_OnLoad()
 			</OnLoad>
 			<OnDragStart>
 				FrameTemplate:StartMoving();

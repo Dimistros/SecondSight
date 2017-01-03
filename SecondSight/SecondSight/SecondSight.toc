@@ -1,6 +1,7 @@
 ## Title: SecondSight
 ## Version: 1.0
-## Author: Cito
-## Interface: 70100
+## Author: Jaspar Pahl aka Ilprincipe
+## Dependencies: BonusScanner
+## Interface: 5875
 
 Frame.xml
