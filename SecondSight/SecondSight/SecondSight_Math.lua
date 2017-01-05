@@ -146,6 +146,13 @@ function SeSi.Player.GetPlayerStats()
 	playerStats["BLOCKBONUS"] = BonusScanner:GetBonus("BLOCK");
 	playerStats["BLOCKVALUEBONUS"] = BonusScanner:GetBonus("BLOCKVALUE");
 
+	--defensive
+	local baseDefense, armorDefense = UnitDefense(pl);
+	playerStats["DEFENSE"] = baseDefense + armorDefense;
+	playerStats["ARMOR"] = nil;
+
+
+
 	--talents
 	return playerStats
 end
@@ -165,3 +172,53 @@ end
 
 
 SeSi.Target = {};
+
+function SeSi.Target.GetTargetStats()
+	local tr = "target";
+	local trStat = {};
+	trStat["LEVEL"] = UnitLevel(tr);
+	trStat["ARMOR"] = UnitArmor(tr);
+	trStat["ATTACKPOWER"] = UnitAttackPower(tr);
+	--damage caused:
+	local lowDmg, hiDmg, offlowDmg, offhiDmg, posBuff, negBuff, percentmod = UnitDamage(tr);
+	trStat["MHLOWDMG"] = lowDmg;
+	trStat["MHHIDMG"] = hiDmg;
+	trStat["OHLOWDMG"] = offlowDmg;
+	trStat["OHHIDMG"] = offhiDmg;
+	trStat["DMGPOSBUFF"] = posBuff;
+	trStat["DMGNEGBUFF"] = negBuff;
+	trStat["DMGPERCENTMOD"] = percentmod;
+	local mainSpeed, offSpeed = UnitAttackSpeed(tr);
+	trStat["MHSPEED"] = mainSpeed;
+	trStat["OHSPEED"] = offSpeed;
+
+	return trStat;
+end
+
+-----------------------------
+SeSi.TEST = {};
+
+function SeSi.TEST.UnitArmorTEST()
+	local pl = "player";
+	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor(pl);
+	local values = {};
+	
+	values["base"] = base;
+	values["effectiveArmor"] = effectiveArmor;
+	values["armor"] = armor;
+	values["posBuff"] = posBuff;
+	values["negBuff"] = negBuff;
+	return values;
+end
+
+function SeSi.TEST.UnitResistanceTEST(i)
+	DEFAULT_CHAT_FRAME:AddMessage(i);
+	local pl = "player";
+	local base, total, bonus, minus = UnitResistance(pl , i);
+	local values = {};
+	values["base"] = base;
+	values["total"] = total;
+	values["bonus"] = bonus;
+	values["minus"] = minus;
+	return values;
+end

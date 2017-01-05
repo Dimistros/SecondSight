@@ -30,14 +30,50 @@
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Button inherits="UIPanelButtonTemplate" text="Button1">
+			<Button inherits="UIPanelButtonTemplate" text="get player">
 				<Size x="75" y="23" />
 				<Anchors>
-					<Anchor point="TOPLEFT" x="36" y="-84" />
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-20" />
+					</Anchor>
 				</Anchors>
 				<Scripts>
 					<OnClick>
 						SeSi.IF.Button1_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="getTarget">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-50" />
+					</Anchor>
+				</Anchors>
+				<Frames>
+					<Button inherits="UIPanelButtonTemplate" text="Button3">
+						<Size x="75" y="23" />
+						<Anchors>
+							<Anchor point="TOPLEFT" />
+						</Anchors>
+					</Button>
+				</Frames>
+				<Scripts>
+					<OnClick>
+						Button2_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="test">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-70" />
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						Button4_OnClick()
 					</OnClick>
 				</Scripts>
 			</Button>

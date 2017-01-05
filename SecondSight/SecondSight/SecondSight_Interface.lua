@@ -18,3 +18,25 @@ function SeSi.IF:Button1_OnClick()
 		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
 	end
 end
+
+function Button2_OnClick()
+	TRstats = SeSi.Target.GetTargetStats();
+	for i,k in pairs(TRstats) do
+		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
+	end
+end
+
+function Button4_OnClick()
+	local value = SeSi.TEST.UnitArmorTEST()
+	for i,k in pairs(value) do
+		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
+	end
+
+	--next
+	for n=0,6 do
+			local value = SeSi.TEST.UnitResistanceTEST(n);
+			for i,k in pairs(value) do
+		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
+	end
+	end
+end
