@@ -1,5 +1,5 @@
 <Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
-	<Script file="Frame.lua" />
+	<Script file="SecondSight_Interface.lua" />
 	<Frame name="FrameTemplate" parent="UIParent" toplevel="true" movable="true" enableMouse="true">
 		<Size x="200" y="200" />
 		<Anchors>
@@ -26,7 +26,18 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						ExitButton_OnClick()
+						SeSi.IF.ExitButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="Button1">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" x="36" y="-84" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						SeSi.IF.Button1_OnClick()
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -34,8 +45,8 @@
 		<Scripts>
 			<OnLoad>
 				FrameTemplate:RegisterForDrag("LeftButton");
-
-				FrameTemplate_OnLoad()
+				DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Interface.xml loaded");
+				SeSi.IF.FrameTemplate_OnLoad()
 			</OnLoad>
 			<OnDragStart>
 				FrameTemplate:StartMoving();
