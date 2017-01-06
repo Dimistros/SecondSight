@@ -1,6 +1,15 @@
 -- Author      : dimistros
 -- Create Date : 1/5/2017 9:16:18 AM
 
+
+-- BUGS:
+-- dodge from agility is not tailored towards lvl
+
+----TODO:
+-- change variables to seperate document (server dependencies)
+-- get UnitResistance spells total is correct, no need for scanner. armor 0 is ok, too
+-- get auras from buffs :-/
+
 DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Math.lua loaded");
 --SeSi = {};
 

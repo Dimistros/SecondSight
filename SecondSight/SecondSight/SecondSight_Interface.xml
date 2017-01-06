@@ -50,14 +50,6 @@
 						<Offset x="20" y="-50" />
 					</Anchor>
 				</Anchors>
-				<Frames>
-					<Button inherits="UIPanelButtonTemplate" text="Button3">
-						<Size x="75" y="23" />
-						<Anchors>
-							<Anchor point="TOPLEFT" />
-						</Anchors>
-					</Button>
-				</Frames>
 				<Scripts>
 					<OnClick>
 						Button2_OnClick()
