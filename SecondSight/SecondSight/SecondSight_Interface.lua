@@ -5,7 +5,11 @@ DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Interface.lua loaded");
 SeSi.IF = {};
 
 function SeSi.IF:ExitButton_OnClick()
-	DEFAULT_CHAT_FRAME:AddMessage(SeSi.Player.Parry.GetEqualLevelParry(SeSi.Player.GetPlayerStats()));
+	--local value = SeSi.TEST.UnitAttackBothHandsTEST("target");
+	--for i,k in pairs(value) do
+	--	DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
+	--end
+
 end
 
 function SeSi.IF:FrameTemplate_OnLoad()
@@ -27,17 +31,12 @@ function Button2_OnClick()
 end
 
 function Button4_OnClick()
-	local value = SeSi.TEST.UnitArmorTEST()
-	for i,k in pairs(value) do
+	local playerStats = SeSi.Player.GetPlayerStats();
+	local targetStats = SeSi.Target.GetTargetStats();
+	local hand = "WEAPONSKILL_MH";
+	local table = SeSi.Player.GetAttackingTable(playerStats, targetStats, hand);
+	for i,k in pairs(table) do
 		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
-	end
-
-	--next
-	for n=0,6 do
-			local value = SeSi.TEST.UnitResistanceTEST(n);
-			for i,k in pairs(value) do
-		DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
-	end
 	end
 end
 

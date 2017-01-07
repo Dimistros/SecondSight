@@ -1,60 +1,125 @@
 -- Author      : dimistros
 -- Create Date : 1/5/2017 9:16:18 AM
 
+-- DEPENDENCIES
+-- BonusScanner
+-- SuperMacro
+
+--DETECTED SERVERBUGS:
+--melee attacks with a fishing pole use your fishing skills instead of your unarmed skill
 
 -- BUGS:
 -- dodge from agility is not tailored towards lvl
 
 ----TODO:
--- change variables to seperate document (server dependencies)
--- get UnitResistance spells total is correct, no need for scanner. armor 0 is ok, too
 -- get auras from buffs :-/
+-- create flags + reset function for breached tresholds like i.e. armor cap, 1% min resist for casters -- warn the player!
 
 DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Math.lua loaded");
---SeSi = {};
-
--- Player Class Stats:
-SeSi.ClassStats = {};
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE = {};
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["WARRIOR"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["PALADIN"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["HUNTER"] =  0.03774;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["ROGUE"] =  0.06897;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["PRIEST"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["SHAMAN"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["MAGE"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["WARLOCK"] =  0.05;
-SeSi.ClassStats.PLAYER_AGI_TO_DODGE["DRUID"] =  0.05;
-
-SeSi.ClassStats.PLAYER_BASE_DODGE = {};
-SeSi.ClassStats.PLAYER_BASE_DODGE["WARRIOR"] =  0;
-SeSi.ClassStats.PLAYER_BASE_DODGE["PALADIN"] =  0.75;
-SeSi.ClassStats.PLAYER_BASE_DODGE["HUNTER"] =  0.64;
-SeSi.ClassStats.PLAYER_BASE_DODGE["ROGUE"] =  0;
-SeSi.ClassStats.PLAYER_BASE_DODGE["PRIEST"] =  3;
-SeSi.ClassStats.PLAYER_BASE_DODGE["SHAMAN"] =  1.75;
-SeSi.ClassStats.PLAYER_BASE_DODGE["MAGE"] =  3.25;
-SeSi.ClassStats.PLAYER_BASE_DODGE["WARLOCK"] =  2;
-SeSi.ClassStats.PLAYER_BASE_DODGE["DRUID"] =  0.75;
-
 
 -- player formulas
 SeSi.Player = {};
 
+-- player is attacking table
+function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand)
+	local table = {};
+	table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
+	return table;
+end 
+
+-- player attacking enemy 
+SeSi.Player.MeleeMiss = {};
+
+function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
+	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats); 
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats[hand];
+	end
+
+	local difference = targetDefense - playerWeaponSkill;
+	local factor = SeSi.ServerValues.Player.MissChancePerDefenseSmall;
+
+	if difference > 10 then
+		local factor = SeSi.ServerValues.Player.MissChancePerDefenseBig;
+		chance = chance + SeSi.ServerValues.Player.MissChancePerDefenseBonus;
+	end
+	
+	chance = chance + difference * factor;
+	return max(0,chance);
+end
+
+function SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats)
+	local chance = SeSi.ServerValues.Player.BaseMissChance 
+		- SeSi.Player.MeleeMiss.GetMissReductionFromTalents(playerStats) 
+			- BonusScanner:GetBonus("TOHIT");
+	if playerStats["DUAL_WIELDING"] == 1 then
+		chance = chance + SeSi.ServerValues.Player.DualWieldMissBonus;
+	end
+	return max(chance, 0);
+end
+
+function SeSi.Player.MeleeMiss.GetMissReductionFromTalents(playerStats)
+	if playerStats["CLASS"] == "HUNTER" then
+		-- surefooted, third tree, third enum
+		local _,_,_,_,bonus = GetTalentInfo(3, 11);
+		return bonus;
+	elseif playerStats["CLASS"] == "PALADIN" then
+		--precision 
+		local _,_,_,_,bonus = GetTalentInfo(2, 3);
+		return bonus;
+	elseif playerStats["CLASS"] == "ROGUE" then
+		--precision 
+		local _,_,_,_,bonus = GetTalentInfo(2, 6);
+		return bonus;
+	elseif playerStats["CLASS"] == "SHAMAN" then
+		--Nature's Guidance 
+		local _,_,_,_,bonus = GetTalentInfo(3, 6);
+		return bonus;
+	else
+		return 0;
+		end
+end
+
 -- Dodge formulas
 SeSi.Player.Dodge = {};
+
+function SeSi.Player.Dodge.AdaptToDefense(playerStats, targetStats, hand)
+	local chance = SeSi.Player.Dodge.GetEqualLevelDodge(playerStats)
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats[hand];
+	end
+
+	local difference = targetDefense - playerWeaponSkill;
+	local factor = SeSi.ServerValues.Player.DodgeChancePerDefenseSmall;
+
+	if difference > 0 then
+		factor = SeSi.ServerValues.Player.DodgeChancePerDefenseBig;
+	end
+	chance = chance + factor * difference;
+	return max(0,chance);
+end
 
 function SeSi.Player.Dodge.GetEqualLevelDodge(playerStats)
 	return 
 		SeSi.Player.Dodge.GetDodgeFromAgility(playerStats)
-			+ SeSi.ClassStats.PLAYER_BASE_DODGE[playerStats["CLASS"]]
+			+ SeSi.ServerValues.Player.PLAYER_BASE_DODGE[playerStats["CLASS"]]
 				+ SeSi.Player.Dodge.GetDodgeFromTalents(playerStats)
-					+ SeSi.Player.Dodge.GetDodgeBuffs(playerStats)
+					+ SeSi.Player.Dodge.GetDodgeRacialBonus(playerStats)
 						+ BonusScanner:GetBonus("DODGE");
 end
 
 function SeSi.Player.Dodge.GetDodgeFromAgility(playerStats)
-	return playerStats["AGILITY"] * SeSi.ClassStats.PLAYER_AGI_TO_DODGE[playerStats["CLASS"]];
+	return playerStats["AGILITY"] * SeSi.ServerValues.Player.PLAYER_AGI_TO_DODGE[playerStats["CLASS"]];
 end
 
 function SeSi.Player.Dodge.GetDodgeFromTalents(playerStats)
@@ -71,7 +136,7 @@ function SeSi.Player.Dodge.GetDodgeFromTalents(playerStats)
 		end
 end
 
-function SeSi.Player.Dodge.GetDodgeBuffs(playerStats)
+function SeSi.Player.Dodge.GetDodgeRacialBonus(playerStats)
 	if playerStats["RACE"] == "NightElf" then
 		return 1;
 	end
@@ -82,10 +147,10 @@ end
 SeSi.Player.Parry = {};
 
 function SeSi.Player.Parry.GetEqualLevelParry(playerStats)
-	if not SeSi.Player.Parry.HasParrySkill() then
+	if (SeSi.Player.Parry.HasParrySkill() == 0) then
 		return 0;
-	elseif SeSi.Player.Parry.HasParrySkill() then
-		return 5 --base
+	else
+		return SeSi.ServerValues.Player.BaseParryChance --base
 			+ SeSi.Player.Parry.GetParryFromTalents(playerStats)
 				+ BonusScanner:GetBonus("Parry");
 		end
@@ -107,7 +172,7 @@ end
 
 function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 	if playerStats["CLASS"] == "HUNTER" then
-		-- defelction, third tree, third enum
+		-- deflection, third tree, third enum
 		local _,_,_,_,bonus = GetTalentInfo(3, 3);
 		return bonus;
 	elseif playerStats["CLASS"] == "PALADIN" then
@@ -127,9 +192,16 @@ function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 		end
 end
 
+SeSi.Player.Feral = {};
+function SeSi.Player.Feral.IsFeralForm()
+	if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") or buffed("Aquatic Form") or buffed("Travel Form") then
+		return 1;
+	end
+	return 0;
+end
+
 
 -- get player stats
-
 function SeSi.Player.GetPlayerStats()
 	local pl = "player";
 	local playerStats = {};
@@ -158,11 +230,28 @@ function SeSi.Player.GetPlayerStats()
 	--defensive
 	local baseDefense, armorDefense = UnitDefense(pl);
 	playerStats["DEFENSE"] = baseDefense + armorDefense;
-	playerStats["ARMOR"] = nil;
+	_, playerStats["ARMOR"] = UnitResistance(pl, 0); --physical
+	_, playerStats["HOLY_RES"] = UnitResistance(pl, 1); 
+	_, playerStats["FIRE_RES"] = UnitResistance(pl, 2);
+	_, playerStats["NATURE_RES"] = UnitResistance(pl, 3);
+	_, playerStats["FROST_RES"] = UnitResistance(pl, 4);
+	_, playerStats["SHADOW_RES"] = UnitResistance(pl, 5);
+	_, playerStats["ARCANE_RES"] = UnitResistance(pl, 6);
 
+	-- weapon skill
+	local mainBase, mainMod, offBase, offMod = UnitAttackBothHands(pl);
+	playerStats["WEAPONSKILL_MH"] = mainBase + mainMod;
+	playerStats["WEAPONSKILL_OH"] = offBase + offMod;
+	-- find out if player is dual wielding
+	local mainSpeed, offSpeed = UnitAttackSpeed(pl);
+	playerStats["SPEED_MH"] = mainSpeed;
+	playerStats["SPEED_OH"] = offSpeed;
+	if offSpeed == nil then
+		playerStats["DUAL_WIELDING"] = 0;
+	else
+		playerStats["DUAL_WIELDING"] = 1;
+	end
 
-
-	--talents
 	return playerStats
 end
 
@@ -207,27 +296,56 @@ end
 -----------------------------
 SeSi.TEST = {};
 
-function SeSi.TEST.UnitArmorTEST()
-	local pl = "player";
-	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor(pl);
-	local values = {};
+--function SeSi.TEST.UnitArmorTEST() -- UnitResistanceTEST is better
+--	local pl = "player";
+--	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor(pl);
+--	local values = {};
 	
-	values["base"] = base;
-	values["effectiveArmor"] = effectiveArmor;
-	values["armor"] = armor;
-	values["posBuff"] = posBuff;
-	values["negBuff"] = negBuff;
-	return values;
-end
+--	values["base"] = base;
+--	values["effectiveArmor"] = effectiveArmor;
+--	values["armor"] = armor;
+--	values["posBuff"] = posBuff;
+--	values["negBuff"] = negBuff;
+--	return values;
+--end
 
-function SeSi.TEST.UnitResistanceTEST(i)
-	DEFAULT_CHAT_FRAME:AddMessage(i);
-	local pl = "player";
-	local base, total, bonus, minus = UnitResistance(pl , i);
-	local values = {};
-	values["base"] = base;
-	values["total"] = total;
-	values["bonus"] = bonus;
-	values["minus"] = minus;
-	return values;
+--function SeSi.TEST.UnitResistanceTEST(i) -- using
+--	DEFAULT_CHAT_FRAME:AddMessage(i);
+--	local pl = "player";
+--	local base, total, bonus, minus = UnitResistance(pl , i);
+--	local values = {};
+--	values["base"] = base;
+--	values["total"] = total;
+--	values["bonus"] = bonus;
+--	values["minus"] = minus;
+--	return values;
+--end
+
+--function SeSi.TEST.GetCombatRating() -- not working
+--	local rating = GetSkillLineInfo(skillIndex);
+--	local values = {};
+--	values["rating"] = rating;
+--	return values;
+--end
+
+--function SeSi.TEST.UnitAttackBothHandsTEST(unit)
+--	local mainBase, mainMod, offBase, offMod = UnitAttackBothHands(unit);
+--	local values = {};
+--	values["mainBase"] = mainBase;
+--	values["mainMod"] = mainMod;
+--	values["offBase"] = offBase;
+--	values["offMod"] = offMod;
+--	return values;
+
+--end
+
+function SeSi.TEST.UnitBuff()
+	if buffed("Bear Form", 'player') then
+		DEFAULT_CHAT_FRAME:AddMessage('Bear');
+	end
+	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Cat Form", 'player'));
+	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Bear Form", 'player'));
+	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Dire Bear Form", 'player'));
+	
+	
 end
