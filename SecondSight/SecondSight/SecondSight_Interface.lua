@@ -7,7 +7,7 @@ SeSi.IF = {};
 function SeSi.IF:ExitButton_OnClick()
 	--local value = SeSi.TEST.UnitAttackBothHandsTEST("target");
 	--for i,k in pairs(value) do
-	--	DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
+		DEFAULT_CHAT_FRAME:AddMessage(SeSi.TEST.UnitBuff());
 	--end
 
 end

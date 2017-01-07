@@ -38,3 +38,8 @@ SeSi.ServerValues.Player.DodgeChancePerDefenseSmall = 0.04;
 SeSi.ServerValues.Player.DodgeChancePerDefenseBig = 0.1;
 
 SeSi.ServerValues.Player.BaseParryChance = 5;
+
+SeSi.ServerValues.Target = {};
+SeSi.ServerValues.Target.BaseDodgeChance = 5;
+SeSi.ServerValues.Target.DodgeChancePerDefenseSmall = 0.04;
+SeSi.ServerValues.Target.DodgeChancePerDefenseBig = 0.1;

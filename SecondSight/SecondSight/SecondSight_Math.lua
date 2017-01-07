@@ -24,6 +24,7 @@ SeSi.Player = {};
 function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand)
 	local table = {};
 	table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
+	table["DODGE"] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
 	return table;
 end 
 
@@ -32,6 +33,11 @@ SeSi.Player.MeleeMiss = {};
 
 function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
 	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats); 
+
+	if targetStats["IS_PLAYER"] == 1 then
+		return chance; -- player weapon 
+	end
+
 	local targetDefense = 5 * targetStats["LEVEL"];
 	local playerWeaponSkill;
 
@@ -274,6 +280,12 @@ SeSi.Target = {};
 function SeSi.Target.GetTargetStats()
 	local tr = "target";
 	local trStat = {};
+
+	if UnitIsPlayer(tr) then
+		trStat["IS_PLAYER"] = 1;
+	else 
+		trStat["IS_PLAYER"] = 0;
+	end
 	trStat["LEVEL"] = UnitLevel(tr);
 	trStat["ARMOR"] = UnitArmor(tr);
 	trStat["ATTACKPOWER"] = UnitAttackPower(tr);
@@ -293,6 +305,55 @@ function SeSi.Target.GetTargetStats()
 	return trStat;
 end
 
+function SeSi.Target.GetDodge(playerStats, targetStats, hand)
+	if targetStats["IS_PLAYER"] == 1 then
+		return 0; -- can't compute for players since dodge is based on agi and talents which cannot be read
+	end
+	local chance = SeSi.ServerValues.Target.BaseDodgeChance;
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats[hand];
+	end
+
+	local difference = targetDefense - playerWeaponSkill;
+	local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseSmall;
+
+	if difference > 10 then
+		local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseBig
+	end
+	
+	chance = chance + difference * factor;
+	return max(0,chance);
+end
+
+function SeSi.Target.GetParry(playerStats, targetStats, hand)
+	if targetStats["IS_PLAYER"] == 1 then
+		return 0; -- can't compute for players since dodge is based on agi and talents which cannot be read
+	end
+	local chance = SeSi.ServerValues.Target.BaseDodgeChance;
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats[hand];
+	end
+
+	local difference = targetDefense - playerWeaponSkill;
+	local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseSmall;
+
+	if difference > 10 then
+		local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseBig
+	end
+	
+	chance = chance + difference * factor;
+	return max(0,chance);
+end
 -----------------------------
 SeSi.TEST = {};
 
@@ -340,9 +401,7 @@ SeSi.TEST = {};
 --end
 
 function SeSi.TEST.UnitBuff()
-	if buffed("Bear Form", 'player') then
-		DEFAULT_CHAT_FRAME:AddMessage('Bear');
-	end
+	return UnitIsPlayer('target')
 	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Cat Form", 'player'));
 	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Bear Form", 'player'));
 	--DEFAULT_CHAT_FRAME:AddMessage(buffed("Dire Bear Form", 'player'));
