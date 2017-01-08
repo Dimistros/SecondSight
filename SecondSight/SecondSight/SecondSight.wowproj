@@ -15,15 +15,24 @@
     <OutputPath>.</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="SecondSight_Interface.lua">
+      <SubType>Code</SubType>
+      <DependentUpon>SecondSight_Interface.xml</DependentUpon>
+    </Content>
+    <Content Include="SecondSight_Interface.xml">
+      <SubType>Frame</SubType>
+    </Content>
+    <Content Include="SecondSight_Localization.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="SecondSight_Math.lua">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="SecondSight.toc">
       <SubType>TableOfContents</SubType>
     </Content>
-    <Content Include="Frame.xml">
-      <SubType>Frame</SubType>
-    </Content>
-    <Content Include="Frame.lua">
+    <Content Include="SecondSight_ServerValues.lua">
       <SubType>Code</SubType>
-      <DependentUpon>Frame.xml</DependentUpon>
     </Content>
   </ItemGroup>
   <Import Project="$(DevEnvDir)\Extensions\Tools\MSBuild\Microsoft\WowAddonStudio\3.0\WowAddonStudio.targets" />

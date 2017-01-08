@@ -1,6 +1,11 @@
+## Author: Jaspar Pahl aka Ilprincipe
+## Interface: 5875
+## Notes: Addon to display attack tables.
 ## Title: SecondSight
 ## Version: 1.0
-## Author: Cito
-## Interface: 70100
-
-Frame.xml
+## Dependencies: BonusScanner
+## OptionalDeps: BonusScanner
+SecondSight_Localization.lua
+SecondSight_ServerValues.lua
+SecondSight_Math.lua
+SecondSight_Interface.xml

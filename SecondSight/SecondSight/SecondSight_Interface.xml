@@ -1,0 +1,87 @@
+<Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="SecondSight_Interface.lua" />
+	<Frame name="FrameTemplate" parent="UIParent" toplevel="true" movable="true" enableMouse="true">
+		<Size x="200" y="200" />
+		<Anchors>
+			<Anchor point="CENTER" />
+		</Anchors>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11" />
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32" />
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32" />
+			</EdgeSize>
+		</Backdrop>
+		<Frames>
+			<Button name="ExitButton" inherits="UIPanelCloseButton">
+				<Size x="40" y="40" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="0" y="0">
+						<Offset x="-10" y="-10" />
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						SeSi.IF.ExitButton_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="get player">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-20" />
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						SeSi.IF.Button1_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="getTarget">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-50" />
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						Button2_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+			<Button inherits="UIPanelButtonTemplate" text="test">
+				<Size x="75" y="23" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="0" y="0">
+						<Offset x="20" y="-70" />
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						Button4_OnClick()
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				FrameTemplate:RegisterForDrag("LeftButton");
+				DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Interface.xml loaded");
+				SeSi.IF.FrameTemplate_OnLoad()
+			</OnLoad>
+			<OnDragStart>
+				FrameTemplate:StartMoving();
+			</OnDragStart>
+			<OnDragStop>
+				FrameTemplate:StopMovingOrSizing();
+			</OnDragStop>
+		</Scripts>
+	</Frame>
+</Ui>
