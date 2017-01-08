@@ -7,6 +7,9 @@
     <ProjectGuid>{e2a8d0b0-0db9-4288-868c-569b8e4dda41}</ProjectGuid>
     <AssemblyName>SecondSight</AssemblyName>
     <RootNamespace>SecondSight</RootNamespace>
+    <DeployBasePath>C:\World of Warcraft Classic</DeployBasePath>
+    <RuntimePath>C:\World of Warcraft Classic</RuntimePath>
+    <WowPath>C:\World of Warcraft Classic</WowPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Default' ">
     <OutputPath>.</OutputPath>

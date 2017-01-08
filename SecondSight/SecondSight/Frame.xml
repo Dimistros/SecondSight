@@ -1,6 +1,6 @@
 <Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
 	<Script file="Frame.lua" />
-	<Frame name="Frame1" parent="UIParent" toplevel="true" enableMouse="true">
+	<Frame name="FrameTemplate" parent="UIParent" toplevel="true" movable="true" enableMouse="true">
 		<Size x="200" y="200" />
 		<Anchors>
 			<Anchor point="CENTER" />
@@ -16,10 +16,26 @@
 				<AbsValue val="32" />
 			</EdgeSize>
 		</Backdrop>
+		<Frames>
+			<Button name="ExitButton" inherits="UIPanelCloseButton">
+				<Size x="40" y="40" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="0" y="0">
+						<Offset x="-10" y="-10" />
+					</Anchor>
+				</Anchors>
+			</Button>
+		</Frames>
 		<Scripts>
 			<OnLoad>
-				Frame1_OnLoad()
+				FrameTemplate:RegisterForDrag("LeftButton");
 			</OnLoad>
+			<OnDragStart>
+				FrameTemplate:StartMoving();
+			</OnDragStart>
+			<OnDragStop>
+				FrameTemplate:StopMovingOrSizing();
+			</OnDragStop>
 		</Scripts>
 	</Frame>
 </Ui>
