@@ -65,21 +65,12 @@ end
 SeSi.Player = {};
 
 -- player is attacking table
-function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand)
+function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand, isYellow)
 	local table = {};
-	--table["INFO"] = "Player Attacking Mob table:"
-	--table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
-	--table["DODGE"] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
-	--table["PARRY"] = SeSi.Target.GetParry(playerStats, targetStats, hand);
-	--table["GLANCING"] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
-	--table["BLOCK"] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
-	--table["CRIT"] = SeSi.Player.MeleeCrit.AdaptToWeaponSkill(playerStats, targetStats, hand);
-	--table["CRUSH"] = 0;
-	--table["HIT"] = 1;
-	table[0] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
+	table[0] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand, isYellow);
 	table[1] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
 	table[2] = SeSi.Target.GetParry(playerStats, targetStats, hand);
-	table[3] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
+	table[3] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand, isYellow);
 	table[4] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
 	table[5] = SeSi.Player.MeleeCrit.AdaptToWeaponSkill(playerStats, targetStats, hand);
 	table[6] = 0;
@@ -90,9 +81,9 @@ end
 -- player attacking enemy 
 SeSi.Player.MeleeMiss = {};
 
-function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
+function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand, isYellow)
 	local hand = "WEAPONSKILL_".. hand;
-	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats); 
+	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats, isYellow); 
 
 	--if targetStats["IS_PLAYER"] == 1 then
 	--	return chance; -- player weapon 
@@ -121,11 +112,11 @@ function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
 	return max(0,chance);
 end
 
-function SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats)
+function SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats, isYellow)
 	local chance = SeSi.ServerValues.Player.BaseMissChance 
 		- SeSi.Player.MeleeMiss.GetMissReductionFromTalents(playerStats) 
 			- BonusScanner:GetBonus("TOHIT");
-	if playerStats["DUAL_WIELDING"] == 1 then
+	if (playerStats["DUAL_WIELDING"] == 1 and not(isYellow == 1)) then
 		chance = chance + SeSi.ServerValues.Player.DualWieldMissBonus;
 	end
 	return max(chance, 0);
@@ -258,7 +249,10 @@ function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 		end
 end
 
-function SeSi.Player.GetGlanceChance(playerStats, targetStats, hand)
+function SeSi.Player.GetGlanceChance(playerStats, targetStats, hand, isYellow)
+	if (isYellow == 1) then
+		return 0; -- special attacks cannot be a glance
+	end
 	hand = "WEAPONSKILL_".. hand;
 	local level = targetStats["LEVEL"];
 	local mobDefense = 5 * targetStats["LEVEL"];

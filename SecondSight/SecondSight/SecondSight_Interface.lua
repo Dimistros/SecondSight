@@ -24,18 +24,15 @@ end
 
 function SeSi.IF:testButton_OnClick()
 	local playerStats = SeSi.Player.GetPlayerStats();
-	--local targetStats = SeSi.Target.CreateGenericEqualTarget(playerStats)
-	local targetStats = SeSi.Target.GetTargetStats()
-	--local hand = "WEAPONSKILL_MH";
-	--local table = SeSi.Player.GetAttackingTable(playerStats, targetStats, hand);
-	--for i,k in pairs(table) do
-	--	DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
-	--end
-	local playerAttackTable = SeSi.Player.GetAttackingTable(playerStats, targetStats, "MH");
-	local playerAttackTableLimited, playerAttackTableLimitedSummed = SeSi.LimitTable(playerAttackTable);
-	SeSi.Report(playerAttackTable);
-	SeSi.Report(playerAttackTableLimited);
-	SeSi.Report(playerAttackTableLimitedSummed);
+	local targetStats = SeSi.Target.CreateGenericEqualTarget(playerStats)
+	--local targetStats = SeSi.Target.GetTargetStats()
+
+	local playerAttackTableMH = SeSi.LimitTable(SeSi.Player.GetAttackingTable(playerStats, targetStats, "MH", 0));
+	local playerAttackTableOH = SeSi.LimitTable(SeSi.Player.GetAttackingTable(playerStats, targetStats, "OH", 0));
+	local playerAttackTableYellow = SeSi.LimitTable(SeSi.Player.GetAttackingTable(playerStats, targetStats, "MH", 1));
+	SeSi.Report(playerAttackTableMH);
+	SeSi.Report(playerAttackTableOH);
+	SeSi.Report(playerAttackTableYellow);
 end
 
 
