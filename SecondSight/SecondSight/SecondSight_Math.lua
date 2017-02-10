@@ -7,15 +7,31 @@
 
 --DETECTED SERVERBUGS:
 --melee attacks with a fishing pole use your fishing skills instead of your unarmed skill
+-- paladin is neither punished nor changed in any other way in glance factor calculation. According to wow wiki (http://wowwiki.wikia.com/wiki/Weapon_skill?oldid=349241), all melee classes should be treated equally. Shamans are treated as casters i.e.
 
 -- BUGS:
 -- dodge from agility is not tailored towards lvl
 
 ----TODO:
+-- target parry is equal to dodge: wrong!
 -- get auras from buffs :-/
 -- create flags + reset function for breached tresholds like i.e. armor cap, 1% min resist for casters -- warn the player!
 
 DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Math.lua loaded");
+
+SeSi.Settings = {};
+SeSi.Settings.AttackingFromBehind = 0;
+
+function SeSi.Report(table)
+
+	DEFAULT_CHAT_FRAME:AddMessage("----------------");
+	DEFAULT_CHAT_FRAME:AddMessage("Table: " .. table["INFO"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Miss: " .. table["MISS"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Dodge: " .. table["DODGE"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Parry: " .. table["PARRY"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Glancing: " .. table["GLANCING"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Block: " .. table["BLOCK"]);
+end
 
 -- player formulas
 SeSi.Player = {};
@@ -23,8 +39,13 @@ SeSi.Player = {};
 -- player is attacking table
 function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand)
 	local table = {};
+	table["INFO"] = "Player Attacking Mob table:"
 	table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
 	table["DODGE"] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
+	table["PARRY"] = SeSi.Target.GetParry(playerStats, targetStats, hand);
+	table["GLANCING"] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
+	table["BLOCK"] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
+	
 	return table;
 end 
 
@@ -32,11 +53,12 @@ end
 SeSi.Player.MeleeMiss = {};
 
 function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
+	hand = "WEAPONSKILL_".. hand;
 	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats); 
 
-	if targetStats["IS_PLAYER"] == 1 then
-		return chance; -- player weapon 
-	end
+	--if targetStats["IS_PLAYER"] == 1 then
+	--	return chance; -- player weapon 
+	--end --not correct on Elysium at least, weapon skill has an effect in pvp
 
 	local targetDefense = 5 * targetStats["LEVEL"];
 	local playerWeaponSkill;
@@ -48,13 +70,15 @@ function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
 	end
 
 	local difference = targetDefense - playerWeaponSkill;
-	local factor = SeSi.ServerValues.Player.MissChancePerDefenseSmall;
+	local factor = SeSi.ServerValues.Player.MissChancePerDefenseBase;
 
-	if difference > 10 then
-		local factor = SeSi.ServerValues.Player.MissChancePerDefenseBig;
-		chance = chance + SeSi.ServerValues.Player.MissChancePerDefenseBonus;
+	if difference > 0 then
+		factor = SeSi.ServerValues.Player.MissChancePerDefenseSmall;
+		if difference > 10 then
+			factor = SeSi.ServerValues.Player.MissChancePerDefenseBig;
+			chance = chance + SeSi.ServerValues.Player.MissChancePerDefenseBonus;
+		end
 	end
-	
 	chance = chance + difference * factor;
 	return max(0,chance);
 end
@@ -95,6 +119,7 @@ end
 SeSi.Player.Dodge = {};
 
 function SeSi.Player.Dodge.AdaptToDefense(playerStats, targetStats, hand)
+	hand = "WEAPONSKILL_".. hand;
 	local chance = SeSi.Player.Dodge.GetEqualLevelDodge(playerStats)
 	local targetDefense = 5 * targetStats["LEVEL"];
 	local playerWeaponSkill;
@@ -108,9 +133,6 @@ function SeSi.Player.Dodge.AdaptToDefense(playerStats, targetStats, hand)
 	local difference = targetDefense - playerWeaponSkill;
 	local factor = SeSi.ServerValues.Player.DodgeChancePerDefenseSmall;
 
-	if difference > 0 then
-		factor = SeSi.ServerValues.Player.DodgeChancePerDefenseBig;
-	end
 	chance = chance + factor * difference;
 	return max(0,chance);
 end
@@ -198,6 +220,70 @@ function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 		end
 end
 
+function SeSi.Player.GetGlanceChance(playerStats, targetStats, hand)
+	hand = "WEAPONSKILL_".. hand;
+	local level = targetStats["LEVEL"];
+	local mobDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = min(5 * playerStats["LEVEL"], playerStats[hand]); -- cannot increase weapon skill over cap for this
+	end
+
+	local chance;
+	if playerStats["CLASS"] == "WARLOCK" or playerStats["CLASS"] == "MAGE" or playerStats["CLASS"] == "PRIEST" then
+		--DEFAULT_CHAT_FRAME:AddMessage("Caster detected");
+		if level < 30 then
+			chance = level + (mobDefense - playerWeaponSkill)*2;
+		else
+			chance = 30 + (mobDefense - playerWeaponSkill)*2;
+		end
+	else
+		chance = 10 + (mobDefense - playerWeaponSkill)*2;
+	end
+	return max(0, min(chance, 100));
+end
+
+--function SeSi.Player.GetGlanceFactor(playerStats, targetStats, hand)
+	--hand = "WEAPONSKILL_".. hand;
+--	local level = targetStats["LEVEL"];
+--	local mobDefense = 5 * targetStats["LEVEL"];
+--	local playerWeaponSkill;
+
+--	if SeSi.Player.Feral.IsFeralForm() == 1 then
+--		playerWeaponSkill = 5 * playerStats["LEVEL"];
+--	else
+--		playerWeaponSkill =  playerStats[hand]; 
+--	end
+
+--	local baseLowEnd = 1.3;
+--	local baseHighEnd = 1.2;
+--	if playerStats["CLASS"] == "WARLOCK" 
+--		or playerStats["CLASS"] == "MAGE" 
+--			or playerStats["CLASS"] == "PRIEST" 
+--				or playerStats["CLASS"] == "SHAMAN"
+--					or playerStats["CLASS"] == "DRUID" then
+--						baseLowEnd  -= 0.7;
+--						baseHighEnd -= 0.3;
+
+--					end
+
+--	local maxLowEnd = 0.6;
+--	if playerStats["CLASS"] == "WARRIOR" 
+--		or playerStats["CLASS"] == "ROGUE" then
+--			maxLowEnd = 0.91;
+--		end
+
+--	local diff = (mobDefense - playerWeaponSkill);
+--	local lowEnd  = max(0.01, baseLowEnd - (0.05f * diff));
+--	local highEnd = max(0.2, min(baseHighEnd - (0.03f * diff), 0.99));
+
+--	return max(0, min( (lowEnd + highEnd)/2, 1));
+--end
+
+
 SeSi.Player.Feral = {};
 function SeSi.Player.Feral.IsFeralForm()
 	if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") or buffed("Aquatic Form") or buffed("Travel Form") then
@@ -226,7 +312,7 @@ function SeSi.Player.GetPlayerStats()
 	--like +crit chance, cannot be read from vanilla api to my knowledge
 	--using addon BonusScanner
 	playerStats["HITBONUS"] = BonusScanner:GetBonus("TOHIT");
-	playerStats["CRITBONUS"] = SeSi.GetCritTalents(playerStats) + BonusScanner:GetBonus("CRIT");
+	playerStats["CRITBONUS"] = BonusScanner:GetBonus("CRIT");
 	--defense
 	playerStats["DODGEBONUS"] = BonusScanner:GetBonus("DODGE");
 	playerStats["PARRYBONUS"] = BonusScanner:GetBonus("PARRY");
@@ -257,23 +343,95 @@ function SeSi.Player.GetPlayerStats()
 	else
 		playerStats["DUAL_WIELDING"] = 1;
 	end
+	playerStats["WEAPONTYPE_MH"] = SeSi.Player.GetWeaponType("MainHandSlot");
+	playerStats["WEAPONTYPE_OH"] = SeSi.Player.GetWeaponType("SecondaryHandSlot");
 
 	return playerStats
 end
 
-function SeSi.GetCritTalents(playerStats)
-	if playerStats["CLASS"] == "WARRIOR" then
-		-- cruelty, second tree, second enum
-		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
-		return critBonusTalent;
-	elseif playerStats["CLASS"] == "WARRIOR" then
-		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
-		return critBonusTalent;
-	else
-		return 0;
-		end
+SeSi.Player.MeleeCrit = {};
+
+--function SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand)
+--	return SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
+--		+ playerStats["CRITBONUS"]
+--			+ SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
+--				+ SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs();
+--end
+
+function SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
+	return 0;
 end
 
+function SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs()
+	return 0;
+end
+
+--function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
+--  hand = "WEAPONTYPE_".. hand;
+--	local totalBonus = 0;
+
+--	if playerStats["CLASS"] == "DRUID" then
+--		if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") then
+--			local _,_,_,_,critBonusTalent = 2 * GetTalentInfo(2, 8); --sharpened claws only, leader of the pack is a buff and is treated accordingly
+--		end
+--		return critBonusTalent;
+--	else if playerStats["CLASS"] == "HUNTER" then
+--		-- Killer Instinct, third tree, second enum
+--		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 13);
+--		return critBonusTalent;
+--	else if playerStats["CLASS"] == "PALADIN" then
+--		-- Conviction, third tree, 7th enum
+--		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 7);
+--		return critBonusTalent;
+--	else if playerStats["CLASS"] == "ROGUE" then
+--		-- Malice, first tree, 3th enum
+--		local _,_,_,_,critBonusTalent = GetTalentInfo(1, 3);
+--		totalBonus += critBonusTalent;
+--		--Dagger Special
+--		if playerStats[hand] == "Daggers" then
+--			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
+--			totalBonus += critBonusTalent;
+--		end
+--		--Fist Weapon Special
+--		if playerStats[hand] == "Fist Weapons" then
+--			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
+--			totalBonus += critBonusTalent;
+--		end
+--		return totalBonus;
+--	else if playerStats["CLASS"] == "SHAMAN" then
+--		-- thundering strikes, second tree, 4th enum
+--		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 4);
+--		return critBonusTalent;
+--	else if playerStats["CLASS"] == "WARRIOR" then
+--		-- cruelty, second tree, second enum
+--		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
+--		totalBonus += critBonusTalent;
+--		--axe specialization
+--		if playerStats[hand] == "One-Handed Axes" or SeSi.Player.GetWeaponType(hand) == "Two-Handed Axes" then
+--			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
+--			totalBonus += critBonusTalent;
+--		end
+--		-- pole spec
+--		if playerStats[hand] == "Polearms" then
+--			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
+--			totalBonus += critBonusTalent;
+--		end
+--		return totalBonus;
+--	else
+--		return 0;
+--	end
+--end
+
+function SeSi.Player.GetWeaponType(slot)
+	local itemLink = GetInventoryItemLink("player",GetInventorySlotInfo(slot))
+	if not(itemLink == nil) then
+		local _, _, itemCode = strfind(itemLink, "(%d+):")
+		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
+		return itemType;
+	else
+		return 0;
+	end
+end
 
 SeSi.Target = {};
 
@@ -322,8 +480,8 @@ function SeSi.Target.GetDodge(playerStats, targetStats, hand)
 	local difference = targetDefense - playerWeaponSkill;
 	local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseSmall;
 
-	if difference > 10 then
-		local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseBig
+	if difference > SeSi.ServerValues.Target.DodgeChanceFormulaThreshold then
+		factor = SeSi.ServerValues.Target.DodgeChancePerDefenseBig;
 	end
 	
 	chance = chance + difference * factor;
@@ -331,10 +489,15 @@ function SeSi.Target.GetDodge(playerStats, targetStats, hand)
 end
 
 function SeSi.Target.GetParry(playerStats, targetStats, hand)
-	if targetStats["IS_PLAYER"] == 1 then
-		return 0; -- can't compute for players since dodge is based on agi and talents which cannot be read
+	if (targetStats["IS_PLAYER"] == 1) then
+		return "unknown"; -- can't compute for players since dodge is based on agi and talents which cannot be read
 	end
-	local chance = SeSi.ServerValues.Target.BaseDodgeChance;
+
+	if (SeSi.Settings.AttackingFromBehind == 1) then
+		return 0; -- can't parry from behind
+	end
+
+	local chance = SeSi.ServerValues.Target.BaseParryChance
 	local targetDefense = 5 * targetStats["LEVEL"];
 	local playerWeaponSkill;
 
@@ -345,15 +508,50 @@ function SeSi.Target.GetParry(playerStats, targetStats, hand)
 	end
 
 	local difference = targetDefense - playerWeaponSkill;
-	local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseSmall;
+	local factor = SeSi.ServerValues.Target.ParryChancePerDefenseNormal;
 
-	if difference > 10 then
-		local factor = SeSi.ServerValues.Target.DodgeChancePerDefenseBig
+	if difference > 0 then
+		factor = SeSi.ServerValues.Target.ParryChancePerDefenseSmall;
+
+		if difference > SeSi.ServerValues.Target.ParryChanceFormulaThreshold then
+			factor = SeSi.ServerValues.Target.ParryChancePerDefenseBig;
+		end
 	end
-	
 	chance = chance + difference * factor;
 	return max(0,chance);
 end
+
+function SeSi.Target.GetBlock(playerStats, targetStats, hand)
+	if (targetStats["IS_PLAYER"] == 1) then
+		return "unknown"; -- can't compute for players since block is subject to talents
+	end
+
+	if (SeSi.Settings.AttackingFromBehind == 1) then
+		return 0; -- can't block from behind
+	end
+
+	local chance = SeSi.ServerValues.Target.BaseBlockChance;
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats[hand];
+	end
+
+	local difference = targetDefense - playerWeaponSkill;
+	local factor = SeSi.ServerValues.Target.BlockPerDefenseBig;
+
+	if difference > 0 then
+		factor = SeSi.ServerValues.Target.BlockPerDefenseSmall;
+	end
+
+	chance = chance + difference * factor;
+	return max(0,chance);
+end
+
+
 -----------------------------
 SeSi.TEST = {};
 

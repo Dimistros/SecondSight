@@ -3,8 +3,8 @@
 ## Notes: Addon to display attack tables.
 ## Title: SecondSight
 ## Version: 1.0
-## Dependencies: BonusScanner
-## OptionalDeps: BonusScanner
+## Dependencies: BonusScanner, SuperMacro
+## OptionalDeps: BonusScanner, SuperMacro
 SecondSight_Localization.lua
 SecondSight_ServerValues.lua
 SecondSight_Math.lua
