@@ -221,7 +221,6 @@ function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 		end
 end
 
-<<<<<<< HEAD
 function SeSi.Player.GetGlanceChance(playerStats, targetStats, hand)
 	hand = "WEAPONSKILL_".. hand;
 	local level = targetStats["LEVEL"];
@@ -286,40 +285,90 @@ end
 --end
 
 
-=======
--- player crit
 SeSi.Player.MeleeCrit = {};
-function SeSi.Player.MeleeCrit.GetCritFromTalents(playerStats)	
-	if playerStats["CLASS"] == "DRUID" and SeSi.Player.Feral.IsFeralForm() == 1 then
-		-- sharpened claws, second tree, 8 enum
-		local _,_,_,_,bonus = GetTalentInfo(2, 8);
-		return 2 * bonus; -- each point gives 2 crit
-	elseif playerStats["CLASS"] == "HUNTER" then
-		-- killer instinct, third tree, 13 enum
-		local _,_,_,_,bonus = GetTalentInfo(3, 13);
-		return bonus;
-	elseif playerStats["CLASS"] == "PALADIN" then
-		--conviction 
-		local _,_,_,_,bonus = GetTalentInfo(3, 7);
-		return bonus;
-	elseif playerStats["CLASS"] == "ROGUE" then
-		--malice 
-		local _,_,_,_,bonus = GetTalentInfo(1, 3);
-		return bonus;
-	elseif playerStats["CLASS"] == "SHAMAN" then
-		--thundering strikes 
-		local _,_,_,_,bonus = GetTalentInfo(2, 4);
-		return bonus;
-	elseif playerStats["CLASS"] == "WARRIOR" then
-		--cruelty 
-		local _,_,_,_,bonus = GetTalentInfo(2, 2);
-		return bonus;
-	else
-		return 0;
-		end
+
+function SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand)
+	return SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
+		+ playerStats["CRITBONUS"]
+			+ SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
+				+ SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs();
 end
 
->>>>>>> origin/master
+function SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
+	return 0;
+end
+
+function SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs()
+	return 0;
+end
+
+function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
+	local hand = "WEAPONTYPE_".. hand;
+	local totalBonus = 0;
+
+	if playerStats["CLASS"] == "DRUID" then
+		if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") then
+			local _,_,_,_,critBonusTalent = 2 * GetTalentInfo(2, 8); --sharpened claws only, leader of the pack is a buff and is treated accordingly
+		end
+		return critBonusTalent;
+	elseif playerStats["CLASS"] == "HUNTER" then
+		-- Killer Instinct, third tree, second enum
+		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 13);
+		return critBonusTalent;
+	elseif playerStats["CLASS"] == "PALADIN" then
+		-- Conviction, third tree, 7th enum
+		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 7);
+		return critBonusTalent;
+	elseif playerStats["CLASS"] == "ROGUE" then
+		-- Malice, first tree, 3th enum
+		local _,_,_,_,critBonusTalent = GetTalentInfo(1, 3);
+		totalBonus = totalBonus  + critBonusTalent;
+		--Dagger Special
+		if playerStats[hand] == "Daggers" then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
+			totalBonus = totalBonus  + critBonusTalent;
+		end
+		--Fist Weapon Special
+		if playerStats[hand] == "Fist Weapons" then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
+			totalBonus = totalBonus  + critBonusTalent;
+		end
+		return totalBonus;
+	elseif playerStats["CLASS"] == "SHAMAN" then
+		-- thundering strikes, second tree, 4th enum
+		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 4);
+		return critBonusTalent;
+	elseif playerStats["CLASS"] == "WARRIOR" then
+		-- cruelty, second tree, second enum
+		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
+		totalBonus = totalBonus  + critBonusTalent;
+		--axe specialization
+		if playerStats[hand] == "One-Handed Axes" or SeSi.Player.GetWeaponType(hand) == "Two-Handed Axes" then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
+			totalBonus = totalBonus  + critBonusTalent;
+		end
+		-- pole spec
+		if playerStats[hand] == "Polearms" then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
+			totalBonus = totalBonus  + critBonusTalent;
+		end
+		return totalBonus;
+	else
+		return 0;
+	end
+end
+
+function SeSi.Player.GetWeaponType(slot)
+	local itemLink = GetInventoryItemLink("player",GetInventorySlotInfo(slot))
+	if not(itemLink == nil) then
+		local _, _, itemCode = strfind(itemLink, "(%d+):")
+		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
+		return itemType;
+	else
+		return 0;
+	end
+end
+
 SeSi.Player.Feral = {};
 function SeSi.Player.Feral.IsFeralForm()
 	if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") or buffed("Aquatic Form") or buffed("Travel Form") then
@@ -385,89 +434,7 @@ function SeSi.Player.GetPlayerStats()
 	return playerStats
 end
 
-SeSi.Player.MeleeCrit = {};
 
---function SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand)
---	return SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
---		+ playerStats["CRITBONUS"]
---			+ SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
---				+ SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs();
---end
-
-function SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
-	return 0;
-end
-
-function SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs()
-	return 0;
-end
-
---function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
---  hand = "WEAPONTYPE_".. hand;
---	local totalBonus = 0;
-
---	if playerStats["CLASS"] == "DRUID" then
---		if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") then
---			local _,_,_,_,critBonusTalent = 2 * GetTalentInfo(2, 8); --sharpened claws only, leader of the pack is a buff and is treated accordingly
---		end
---		return critBonusTalent;
---	else if playerStats["CLASS"] == "HUNTER" then
---		-- Killer Instinct, third tree, second enum
---		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 13);
---		return critBonusTalent;
---	else if playerStats["CLASS"] == "PALADIN" then
---		-- Conviction, third tree, 7th enum
---		local _,_,_,_,critBonusTalent = GetTalentInfo(3, 7);
---		return critBonusTalent;
---	else if playerStats["CLASS"] == "ROGUE" then
---		-- Malice, first tree, 3th enum
---		local _,_,_,_,critBonusTalent = GetTalentInfo(1, 3);
---		totalBonus += critBonusTalent;
---		--Dagger Special
---		if playerStats[hand] == "Daggers" then
---			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
---			totalBonus += critBonusTalent;
---		end
---		--Fist Weapon Special
---		if playerStats[hand] == "Fist Weapons" then
---			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
---			totalBonus += critBonusTalent;
---		end
---		return totalBonus;
---	else if playerStats["CLASS"] == "SHAMAN" then
---		-- thundering strikes, second tree, 4th enum
---		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 4);
---		return critBonusTalent;
---	else if playerStats["CLASS"] == "WARRIOR" then
---		-- cruelty, second tree, second enum
---		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
---		totalBonus += critBonusTalent;
---		--axe specialization
---		if playerStats[hand] == "One-Handed Axes" or SeSi.Player.GetWeaponType(hand) == "Two-Handed Axes" then
---			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
---			totalBonus += critBonusTalent;
---		end
---		-- pole spec
---		if playerStats[hand] == "Polearms" then
---			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
---			totalBonus += critBonusTalent;
---		end
---		return totalBonus;
---	else
---		return 0;
---	end
---end
-
-function SeSi.Player.GetWeaponType(slot)
-	local itemLink = GetInventoryItemLink("player",GetInventorySlotInfo(slot))
-	if not(itemLink == nil) then
-		local _, _, itemCode = strfind(itemLink, "(%d+):")
-		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
-		return itemType;
-	else
-		return 0;
-	end
-end
 
 SeSi.Target = {};
 
