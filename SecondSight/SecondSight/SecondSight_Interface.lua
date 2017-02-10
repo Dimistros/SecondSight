@@ -23,15 +23,19 @@ function SeSi.IF:getTarget_OnClick()
 end
 
 function SeSi.IF:testButton_OnClick()
-	--local playerStats = SeSi.Player.GetPlayerStats();
-	--local targetStats = SeSi.Target.GetTargetStats();
+	local playerStats = SeSi.Player.GetPlayerStats();
+	--local targetStats = SeSi.Target.CreateGenericEqualTarget(playerStats)
+	local targetStats = SeSi.Target.GetTargetStats()
 	--local hand = "WEAPONSKILL_MH";
 	--local table = SeSi.Player.GetAttackingTable(playerStats, targetStats, hand);
 	--for i,k in pairs(table) do
 	--	DEFAULT_CHAT_FRAME:AddMessage(i.. " : " ..k);
 	--end
-	local MhWeaponType = SeSi.Player.GetWeaponType("MainHandSlot");
-	DEFAULT_CHAT_FRAME:AddMessage(MhWeaponType);
+	local playerAttackTable = SeSi.Player.GetAttackingTable(playerStats, targetStats, "MH");
+	local playerAttackTableLimited, playerAttackTableLimitedSummed = SeSi.LimitTable(playerAttackTable);
+	SeSi.Report(playerAttackTable);
+	SeSi.Report(playerAttackTableLimited);
+	SeSi.Report(playerAttackTableLimitedSummed);
 end
 
 

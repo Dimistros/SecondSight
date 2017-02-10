@@ -26,12 +26,39 @@ SeSi.Settings.AttackingFromBehind = 0;
 function SeSi.Report(table)
 
 	DEFAULT_CHAT_FRAME:AddMessage("----------------");
-	DEFAULT_CHAT_FRAME:AddMessage("Table: " .. table["INFO"]);
-	DEFAULT_CHAT_FRAME:AddMessage("Miss: " .. table["MISS"]);
-	DEFAULT_CHAT_FRAME:AddMessage("Dodge: " .. table["DODGE"]);
-	DEFAULT_CHAT_FRAME:AddMessage("Parry: " .. table["PARRY"]);
-	DEFAULT_CHAT_FRAME:AddMessage("Glancing: " .. table["GLANCING"]);
-	DEFAULT_CHAT_FRAME:AddMessage("Block: " .. table["BLOCK"]);
+	--DEFAULT_CHAT_FRAME:AddMessage("Table: " .. table["INFO"]);
+	DEFAULT_CHAT_FRAME:AddMessage("Miss: " .. table[0]);
+	DEFAULT_CHAT_FRAME:AddMessage("Dodge: " .. table[1]);
+	DEFAULT_CHAT_FRAME:AddMessage("Parry: " .. table[2]);
+	DEFAULT_CHAT_FRAME:AddMessage("Glancing: " .. table[3]);
+	DEFAULT_CHAT_FRAME:AddMessage("Block: " .. table[4]);
+	DEFAULT_CHAT_FRAME:AddMessage("Crit: " .. table[5]);
+	DEFAULT_CHAT_FRAME:AddMessage("Crush: " .. table[6]);
+	DEFAULT_CHAT_FRAME:AddMessage("NormalHit: " .. table[7]);
+	DEFAULT_CHAT_FRAME:AddMessage("----------------");
+end
+
+function SeSi.LimitTable(table)
+	local absTable = {};
+	local sumTable = {};
+	local currentSum;
+	local lastSum = 0;
+
+	for i = 0,7 do
+		currentSum = 0;
+		for n = 0,i do
+			currentSum = currentSum + table[n];
+		end
+		if currentSum > 100 then
+			absTable[i] =  max(0,100 - lastSum);
+			sumTable[i] = min(100, lastSum + max(0,100 - lastSum));
+		else
+			absTable[i] = table[i];
+			sumTable[i] = currentSum;
+		end
+		lastSum = currentSum;
+	end
+	return absTable, sumTable;
 end
 
 -- player formulas
@@ -40,13 +67,23 @@ SeSi.Player = {};
 -- player is attacking table
 function SeSi.Player.GetAttackingTable(playerStats, targetStats, hand)
 	local table = {};
-	table["INFO"] = "Player Attacking Mob table:"
-	table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
-	table["DODGE"] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
-	table["PARRY"] = SeSi.Target.GetParry(playerStats, targetStats, hand);
-	table["GLANCING"] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
-	table["BLOCK"] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
-	
+	--table["INFO"] = "Player Attacking Mob table:"
+	--table["MISS"] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
+	--table["DODGE"] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
+	--table["PARRY"] = SeSi.Target.GetParry(playerStats, targetStats, hand);
+	--table["GLANCING"] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
+	--table["BLOCK"] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
+	--table["CRIT"] = SeSi.Player.MeleeCrit.AdaptToWeaponSkill(playerStats, targetStats, hand);
+	--table["CRUSH"] = 0;
+	--table["HIT"] = 1;
+	table[0] = SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand);
+	table[1] = SeSi.Target.GetDodge(playerStats, targetStats, hand);
+	table[2] = SeSi.Target.GetParry(playerStats, targetStats, hand);
+	table[3] = SeSi.Player.GetGlanceChance(playerStats, targetStats, hand);
+	table[4] = SeSi.Target.GetBlock(playerStats, targetStats, hand);
+	table[5] = SeSi.Player.MeleeCrit.AdaptToWeaponSkill(playerStats, targetStats, hand);
+	table[6] = 0;
+	table[7] = 100;
 	return table;
 end 
 
@@ -54,7 +91,7 @@ end
 SeSi.Player.MeleeMiss = {};
 
 function SeSi.Player.MeleeMiss.AdaptToDefense(playerStats, targetStats, hand)
-	hand = "WEAPONSKILL_".. hand;
+	local hand = "WEAPONSKILL_".. hand;
 	local chance = SeSi.Player.MeleeMiss.GetEqualLevelMiss(playerStats); 
 
 	--if targetStats["IS_PLAYER"] == 1 then
@@ -120,7 +157,7 @@ end
 SeSi.Player.Dodge = {};
 
 function SeSi.Player.Dodge.AdaptToDefense(playerStats, targetStats, hand)
-	hand = "WEAPONSKILL_".. hand;
+	local hand = "WEAPONSKILL_".. hand;
 	local chance = SeSi.Player.Dodge.GetEqualLevelDodge(playerStats)
 	local targetDefense = 5 * targetStats["LEVEL"];
 	local playerWeaponSkill;
@@ -128,7 +165,7 @@ function SeSi.Player.Dodge.AdaptToDefense(playerStats, targetStats, hand)
 	if SeSi.Player.Feral.IsFeralForm() == 1 then
 		playerWeaponSkill = 5 * playerStats["LEVEL"];
 	else
-		playerWeaponSkill = playerStats[hand];
+		playerWeaponSkill = playerStats["WEAPONSKILL_"..hand];
 	end
 
 	local difference = targetDefense - playerWeaponSkill;
@@ -287,6 +324,24 @@ end
 
 SeSi.Player.MeleeCrit = {};
 
+function SeSi.Player.MeleeCrit.AdaptToWeaponSkill(playerStats, targetStats, hand)
+	local chance = SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand);
+	local targetDefense = 5 * targetStats["LEVEL"];
+	local playerWeaponSkill;
+
+	if SeSi.Player.Feral.IsFeralForm() == 1 then
+		playerWeaponSkill = 5 * playerStats["LEVEL"];
+	else
+		playerWeaponSkill = playerStats["WEAPONSKILL_".. hand];
+	end
+
+	local difference = playerWeaponSkill - targetDefense;
+	local factor = SeSi.ServerValues.Player.CritChancePerDefense;
+
+	chance = chance + factor * difference;
+	return min(max(0,chance), 100);
+end
+
 function SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand)
 	return SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
 		+ playerStats["CRITBONUS"]
@@ -295,11 +350,22 @@ function SeSi.Player.MeleeCrit.GetEqualLevelMeleeCrit(playerStats, hand)
 end
 
 function SeSi.Player.MeleeCrit.GetMeleeCritFromAgi(playerStats)
-	return 0;
+	local levelScale = 73.29 / (playerStats["LEVEL"] + 13.29);
+	return levelScale * playerStats["AGILITY"] * SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT[playerStats["CLASS"]];
 end
 
 function SeSi.Player.MeleeCrit.GetMeleeCritFromBuffs()
-	return 0;
+	local bonus = 0;
+	if buffed(SeSi.Loc.Buffs.Mongoose) then
+		bonus = bonus + 2;
+	end
+	if buffed(SeSi.Loc.Buffs.DragonSlayer) then
+		bonus = bonus + 5;
+	end
+	if buffed(SeSi.Loc.Buffs.ElementalSharpStone) then
+		bonus = bonus + 2;
+	end
+	return bonus;
 end
 
 function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
@@ -324,12 +390,12 @@ function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
 		local _,_,_,_,critBonusTalent = GetTalentInfo(1, 3);
 		totalBonus = totalBonus  + critBonusTalent;
 		--Dagger Special
-		if playerStats[hand] == "Daggers" then
+		if playerStats[hand] == SeSi.Loc.WeaponType.Daggers then
 			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
 			totalBonus = totalBonus  + critBonusTalent;
 		end
 		--Fist Weapon Special
-		if playerStats[hand] == "Fist Weapons" then
+		if playerStats[hand] == SeSi.Loc.WeaponType.FistWeapons then
 			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
 			totalBonus = totalBonus  + critBonusTalent;
 		end
@@ -343,13 +409,13 @@ function SeSi.Player.MeleeCrit.GetMeleeCritTalents(playerStats, hand)
 		local _,_,_,_,critBonusTalent = GetTalentInfo(2, 2);
 		totalBonus = totalBonus  + critBonusTalent;
 		--axe specialization
-		if playerStats[hand] == "One-Handed Axes" or SeSi.Player.GetWeaponType(hand) == "Two-Handed Axes" then
-			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 11); 
+		if (playerStats[hand] == SeSi.Loc.WeaponType.OneHAxe or playerStats[hand] == SeSi.Loc.WeaponType.TwoHAxe) then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(1, 12); 
 			totalBonus = totalBonus  + critBonusTalent;
 		end
 		-- pole spec
-		if playerStats[hand] == "Polearms" then
-			local _,_,_,_,critBonusTalent = GetTalentInfo(2, 16); 
+		if playerStats[hand] == SeSi.Loc.WeaponType.Polearms then
+			local _,_,_,_,critBonusTalent = GetTalentInfo(1, 16); 
 			totalBonus = totalBonus  + critBonusTalent;
 		end
 		return totalBonus;
@@ -466,9 +532,23 @@ function SeSi.Target.GetTargetStats()
 	return trStat;
 end
 
+function SeSi.Target.CreateGenericEqualTarget(playerStats)
+	local trStat = {};
+	trStat["LEVEL"] = playerStats["LEVEL"];
+	trStat["IS_PLAYER"] = 0;
+	return trStat;
+end
+
+function SeSi.Target.CreateGenericBossMob()
+	local trStat = {};
+	trStat["LEVEL"] = 63;
+	trStat["IS_PLAYER"] = 0;
+	return trStat;
+end
+
 function SeSi.Target.GetDodge(playerStats, targetStats, hand)
 	if targetStats["IS_PLAYER"] == 1 then
-		return 0; -- can't compute for players since dodge is based on agi and talents which cannot be read
+		return "unknown"; -- can't compute for players since dodge is based on agi and talents which cannot be read
 	end
 	local chance = SeSi.ServerValues.Target.BaseDodgeChance;
 	local targetDefense = 5 * targetStats["LEVEL"];
@@ -477,7 +557,7 @@ function SeSi.Target.GetDodge(playerStats, targetStats, hand)
 	if SeSi.Player.Feral.IsFeralForm() == 1 then
 		playerWeaponSkill = 5 * playerStats["LEVEL"];
 	else
-		playerWeaponSkill = playerStats[hand];
+		playerWeaponSkill = playerStats["WEAPONSKILL_"..hand];
 	end
 
 	local difference = targetDefense - playerWeaponSkill;
@@ -507,7 +587,7 @@ function SeSi.Target.GetParry(playerStats, targetStats, hand)
 	if SeSi.Player.Feral.IsFeralForm() == 1 then
 		playerWeaponSkill = 5 * playerStats["LEVEL"];
 	else
-		playerWeaponSkill = playerStats[hand];
+		playerWeaponSkill = playerStats["WEAPONSKILL_"..hand];
 	end
 
 	local difference = targetDefense - playerWeaponSkill;
@@ -540,7 +620,7 @@ function SeSi.Target.GetBlock(playerStats, targetStats, hand)
 	if SeSi.Player.Feral.IsFeralForm() == 1 then
 		playerWeaponSkill = 5 * playerStats["LEVEL"];
 	else
-		playerWeaponSkill = playerStats[hand];
+		playerWeaponSkill = playerStats["WEAPONSKILL_"..hand];
 	end
 
 	local difference = targetDefense - playerWeaponSkill;

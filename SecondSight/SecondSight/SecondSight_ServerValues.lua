@@ -6,6 +6,18 @@ DEFAULT_CHAT_FRAME:AddMessage("SecondSight_ServerValues.lua loaded");
 -- Player Class Stats:
 SeSi.ServerValues = {};
 SeSi.ServerValues.Player = {};
+
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT = {};
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["WARRIOR"] =  1 / 20;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["PALADIN"] =  1 / 19.77;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["HUNTER"] =  1 / 53;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["ROGUE"] =  1 / 29;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["PRIEST"] =  1 / 20;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["SHAMAN"] =  1 / 19.7;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["MAGE"] =  1 / 19.44;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["WARLOCK"] =  1 / 20;
+SeSi.ServerValues.Player.PLAYER_AGI_TO_CRIT["DRUID"] =  1 / 20;
+
 SeSi.ServerValues.Player.PLAYER_AGI_TO_DODGE = {};
 SeSi.ServerValues.Player.PLAYER_AGI_TO_DODGE["WARRIOR"] =  0.05;
 SeSi.ServerValues.Player.PLAYER_AGI_TO_DODGE["PALADIN"] =  0.05;
@@ -38,6 +50,8 @@ SeSi.ServerValues.Player.MissChancePerDefenseBonus = 2;
 SeSi.ServerValues.Player.DodgeChancePerDefenseSmall = 0.04;
 
 SeSi.ServerValues.Player.BaseParryChance = 5;
+
+SeSi.ServerValues.Player.CritChancePerDefense = 0.04;
 
 SeSi.ServerValues.Target = {};
 SeSi.ServerValues.Target.BaseDodgeChance = 5;
