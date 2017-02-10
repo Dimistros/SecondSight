@@ -16,7 +16,8 @@
 -- target parry is equal to dodge: wrong!
 -- get auras from buffs :-/
 -- create flags + reset function for breached tresholds like i.e. armor cap, 1% min resist for casters -- warn the player!
-
+-- add rogue crit talent with weapon specialization dagger and fist: http://wowprogramming.com/docs/api/GetItemInfo and http://wowprogramming.com/docs/api/GetAuctionItemSubClasses
+-- add warrior crit bonus talent axe
 DEFAULT_CHAT_FRAME:AddMessage("SecondSight_Math.lua loaded");
 
 SeSi.Settings = {};
@@ -220,6 +221,7 @@ function SeSi.Player.Parry.GetParryFromTalents(playerStats)
 		end
 end
 
+<<<<<<< HEAD
 function SeSi.Player.GetGlanceChance(playerStats, targetStats, hand)
 	hand = "WEAPONSKILL_".. hand;
 	local level = targetStats["LEVEL"];
@@ -284,6 +286,40 @@ end
 --end
 
 
+=======
+-- player crit
+SeSi.Player.MeleeCrit = {};
+function SeSi.Player.MeleeCrit.GetCritFromTalents(playerStats)	
+	if playerStats["CLASS"] == "DRUID" and SeSi.Player.Feral.IsFeralForm() == 1 then
+		-- sharpened claws, second tree, 8 enum
+		local _,_,_,_,bonus = GetTalentInfo(2, 8);
+		return 2 * bonus; -- each point gives 2 crit
+	elseif playerStats["CLASS"] == "HUNTER" then
+		-- killer instinct, third tree, 13 enum
+		local _,_,_,_,bonus = GetTalentInfo(3, 13);
+		return bonus;
+	elseif playerStats["CLASS"] == "PALADIN" then
+		--conviction 
+		local _,_,_,_,bonus = GetTalentInfo(3, 7);
+		return bonus;
+	elseif playerStats["CLASS"] == "ROGUE" then
+		--malice 
+		local _,_,_,_,bonus = GetTalentInfo(1, 3);
+		return bonus;
+	elseif playerStats["CLASS"] == "SHAMAN" then
+		--thundering strikes 
+		local _,_,_,_,bonus = GetTalentInfo(2, 4);
+		return bonus;
+	elseif playerStats["CLASS"] == "WARRIOR" then
+		--cruelty 
+		local _,_,_,_,bonus = GetTalentInfo(2, 2);
+		return bonus;
+	else
+		return 0;
+		end
+end
+
+>>>>>>> origin/master
 SeSi.Player.Feral = {};
 function SeSi.Player.Feral.IsFeralForm()
 	if buffed("Bear Form") or buffed("Cat Form") or buffed("Dire Bear Form") or buffed("Aquatic Form") or buffed("Travel Form") then
